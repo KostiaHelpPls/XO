@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Крестики-нолики</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+    }
+    h1 {
+        margin-bottom: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .board {
+        display: grid;
+      gap: 0.5rem;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      grid-template-columns: repeat(var(--board-size), 1fr);
+      grid-template-rows: repeat(var(--board-size), 1fr);
+    }
+    .cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background-color: #f9f9f9;
+    }
+    .x {
+font-size: 3rem;
+    }
+    .o {
+font-size: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1></h1>
+  <div class="board" id="board"></div>
+  <div class="settings">
+    <label for="boardSize">Размер квадратного поля?</label>
+    <input type="number" id="boardSize" min="3" max="10" value="3">
+    <label for="playerCount">Количество игроков?</label>
+    <input type="number" id="playerCount" min="2" max="5" value="2">
+    <button id="startGame">Играть</button>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const boardSizeInput = document.getElementById('boardSize');
+    const playerCountInput = document.getElementById('playerCount');
+    const startGameButton = document.getElementById('startGame');
+
+    let boardSize = 3;
+    let playerCount = 2;
+    let currentPlayer = 'x';
+    let gameBoard = [];
+
+    boardSizeInput.addEventListener('input', () => {
+      boardSize = parseInt(boardSizeInput.value, 10);
+      if (boardSize < 3) {
+        boardSize = 3;
+        boardSizeInput.value = 3;
+      }
+      if (boardSize > 10) {
+        boardSize = 10;
+        boardSizeInput.value = 10;
+      }
+    });
+
+    playerCountInput.addEventListener('input', () => {
+      playerCount = parseInt(playerCountInput.value, 10);
+      if (playerCount < 2) {
+        playerCount = 2;
+        playerCountInput.value = 2;
+      }
+      if (playerCount > 5) {
+        playerCount = 5;
+        playerCountInput.value = 5;
+      }
+    });
+
+    startGameButton.addEventListener('click', () => {
+      createBoard();
+    });
+
+    function createBoard() {
+      board.innerHTML = '';
+      gameBoard = Array.from({ length: boardSize }, () =>
+        Array.from({ length: boardSize }, () => null)
+      );
+
+      board.style.setProperty('--board-size', boardSize);
+
+      const moveNumber = document.createElement('span');
+      moveNumber.textContent = `Ход номер 1. Сейчас ходит ${currentPlayer.toUpperCase()}`;
+      document.querySelector('h1').textContent = '';
+      document.querySelector('h1').appendChild(moveNumber);
+      gameBoard.forEach((row, rowIndex) => {
+        row.forEach((_, colIndex) => {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.addEventListener('click', () => {
+            if (!gameBoard[rowIndex][colIndex]) {
+              gameBoard[rowIndex][colIndex] = currentPlayer;
+              cell.textContent = currentPlayer;
+              if (checkWin(currentPlayer, boardSize)) {
+                moveNumber.textContent = `На ходу ${getMoveNumber()} победил ${currentPlayer.toUpperCase()}`;
+                board.style.pointerEvents = 'none';
+                resetBoard();
+              } else if (checkDraw()) {
+                moveNumber.textContent = `На ходу ${getMoveNumber()} ничья`;
+                board.style.pointerEvents = 'none';
+                resetBoard();
+              } else {
+                currentPlayer =next();
+                moveNumber.textContent = `Ход номер ${getMoveNumber()}. Сейчас ходит${currentPlayer.toUpperCase()}`;
+              }
+            }
+          });
+          board.appendChild(cell);
+        });
+      });
+    }
+    function checkWin(player, size) {
+      const rowWin = gameBoard.some(row => row.every(cell => cell === player));
+      const colWin = gameBoard.some((_, colIndex) =>
+        gameBoard.every(row => row[colIndex] === player)
+      );
+      const diag1Win = gameBoard.every((row, index) => row[index] === player);
+      const diag2Win = gameBoard.every((row, index) => row[size - index - 1] === player);
+      return rowWin || colWin || diag1Win || diag2Win;
+    }
+    function checkDraw() {
+      return gameBoard.every(row => row.every(cell => cell !== null));
+    }   
+    function next() {
+      const players = ['x', 'o', '1', '2', '3'];
+      const currentPlayerIndex = players.indexOf(currentPlayer);
+      return players[(currentPlayerIndex + 1) % playerCount];
+    }
+    function getMoveNumber() {
+      return gameBoard.flat().filter(cell => cell !== null).length + 1;
+    }
+  </script>
+</body>
+</html>
